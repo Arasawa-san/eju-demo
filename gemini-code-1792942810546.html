@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>EJU听力 -(第1回・第2回)</title>
+  <style>
+    :root {
+      --bg-color: #f6f5f2;
+      --card-bg: #ffffff;
+      --text-main: #2c2c2c;
+      --text-sub: #7a7a7a;
+      --accent: #d9534f;
+      --bar-bg: #1e2029;
+      --star-active: #f5b942;
+      --clue-bg: #fff9e6;
+      --clue-border: #f0c36d;
+    }
+    body.dark {
+      --bg-color: #121318;
+      --card-bg: #1e2028;
+      --text-main: #e8e8e8;
+      --text-sub: #9e9e9e;
+      --bar-bg: #0d0e12;
+      --clue-bg: #2a2415;
+      --clue-border: #8a6d2b;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", "Microsoft YaHei", sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      padding-bottom: 155px;
+      transition: background 0.3s, color 0.3s;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      background: var(--card-bg);
+      border-bottom: 1px solid rgba(0,0,0,0.06);
+    }
+    .brand { display: flex; flex-direction: column; }
+    .brand-title { font-size: 20px; font-weight: 800; color: #b7372a; letter-spacing: 0.5px; }
+    .brand-sub { font-size: 11px; color: var(--text-sub); }
+    .header-controls { display: flex; gap: 10px; align-items: center; }
+    .icon-btn {
+      width: 36px; height: 36px; border-radius: 50%;
+      border: 1px solid rgba(128,128,128,0.25);
+      background: var(--card-bg); color: var(--text-main);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; font-size: 16px;
+    }
+
+    /* 顶部导航栏 */
+    .nav-bar {
+      background: #1a1c24;
+      color: #fff;
+      padding: 10px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      gap: 8px;
+    }
+    .select-wrapper {
+      display: flex; align-items: center; gap: 8px; flex: 1; overflow: hidden;
+    }
+    .set-select, .question-select {
+      background: #fff; color: #222;
+      border: none; padding: 6px 10px;
+      border-radius: 18px; font-weight: 700; font-size: 13px;
+      cursor: pointer; outline: none;
+    }
+    .set-select { background: #ffefc2; color: #7a4f01; flex-shrink: 0; }
+    .question-select { flex: 1; max-width: 220px; }
+    .filter-star-btn {
+      background: #fff; border: none; border-radius: 18px;
+      padding: 4px 12px; cursor: pointer; font-size: 16px; flex-shrink: 0;
+    }
+    .filter-star-btn.active { background: #fff3cd; }
+
+    /* 题干与状态提示 */
+    .top-banner {
+      max-width: 680px; margin: 12px auto 4px; padding: 0 16px;
+      display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;
+    }
+    .question-prompt {
+      font-size: 13.5px; color: var(--text-sub); line-height: 1.5; flex: 1; font-weight: 600;
+    }
+    .toast-tip {
+      background: #4a4a4a; color: #fff; font-size: 12px;
+      padding: 6px 12px; border-radius: 8px; white-space: nowrap;
+    }
+
+    /* 单词卡片列表 */
+    .container { max-width: 680px; margin: 0 auto; padding: 8px 16px; }
+    .vocab-card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 15px 16px;
+      margin-bottom: 11px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+      border: 1px solid rgba(128,128,128,0.1);
+    }
+    .vocab-left {
+      display: flex; align-items: center; gap: 12px; flex: 1;
+    }
+    .kana {
+      font-size: 17px; font-weight: 700; min-width: 122px;
+    }
+    .tts-btn {
+      width: 28px; height: 28px; border-radius: 50%;
+      border: 1.5px solid #d4878f; background: rgba(212, 135, 143, 0.1);
+      color: #c95b66; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; font-size: 13px; flex-shrink: 0;
+    }
+    .tts-btn:active { transform: scale(0.92); background: #c95b66; color: #fff; }
+    .meaning-box {
+      cursor: pointer; user-select: none; flex: 1; padding-left: 6px;
+    }
+    .kanji-row { display: flex; align-items: center; gap: 6px; margin-bottom: 2px; flex-wrap: wrap; }
+    .kanji { font-size: 16px; font-weight: 600; }
+    .tag-badge {
+      font-size: 10.5px; padding: 1px 6px; border-radius: 4px;
+      background: rgba(183, 55, 42, 0.12); color: #b7372a; font-weight: 600;
+    }
+    .meaning { font-size: 13.5px; color: var(--text-sub); }
+    .dots {
+      font-size: 20px; color: #8aa69b; letter-spacing: 4px; font-weight: bold;
+    }
+    .meaning-box.hidden .kanji-row,
+    .meaning-box.hidden .meaning { display: none; }
+    .meaning-box:not(.hidden) .dots { display: none; }
+
+    .star-btn {
+      background: none; border: none; font-size: 22px;
+      color: #b0b0b0; cursor: pointer; padding: 4px;
+    }
+    .star-btn.starred { color: var(--star-active); }
+
+    /* 分层展开拓展词汇按钮 */
+    .expand-vocab-btn {
+      width: 100%; padding: 11px; margin: 6px 0 14px;
+      border-radius: 10px; border: 1.5px dashed rgba(128,128,128,0.35);
+      background: transparent; color: var(--text-sub);
+      font-size: 13px; font-weight: 600; cursor: pointer;
+    }
+    .expand-vocab-btn:hover { border-color: #b7372a; color: #b7372a; }
+
+    /* 答案句精析与原文折叠区 */
+    .eju-extra {
+      margin-top: 14px; background: var(--card-bg);
+      border-radius: 12px; padding: 16px;
+      border: 1px solid rgba(128,128,128,0.15);
+    }
+    .extra-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+    .toggle-btn {
+      padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(128,128,128,0.3);
+      background: transparent; color: var(--text-main); font-size: 13px;
+      cursor: pointer; font-weight: 600;
+    }
+    .toggle-btn.primary-clue {
+      border-color: #d9822b; color: #d9822b; background: rgba(217, 130, 43, 0.08);
+    }
+    .extra-content {
+      margin-top: 14px; padding-top: 14px;
+      border-top: 1px dashed rgba(128,128,128,0.2);
+      font-size: 14.5px; line-height: 1.8; display: none;
+      white-space: pre-wrap;
+    }
+    .extra-content.show { display: block; }
+    .answer-badge {
+      display: inline-block; background: #2b7a4b; color: #fff;
+      padding: 3px 10px; border-radius: 6px; font-weight: bold;
+    }
+
+    /* 答案句高亮卡片 */
+    .clue-card {
+      background: var(--clue-bg);
+      border-left: 4px solid var(--clue-border);
+      padding: 12px 14px; border-radius: 8px; margin-top: 8px;
+    }
+    .clue-jp { font-size: 15px; font-weight: 700; margin-bottom: 6px; line-height: 1.6; }
+    .clue-cn { font-size: 13px; color: var(--text-sub); margin-bottom: 8px; }
+    .clue-note { font-size: 12.5px; color: #b7372a; background: rgba(183,55,42,0.08); padding: 6px 10px; border-radius: 6px; }
+    .clue-actions { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+    .speak-clue-btn {
+      background: #d9822b; color: #fff; border: none;
+      padding: 6px 14px; border-radius: 16px; font-size: 12.5px;
+      font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 5px;
+    }
+    .speak-clue-btn:active { transform: scale(0.95); }
+    mark.script-hl {
+      background: #ffe066; color: #111; padding: 2px 4px; border-radius: 4px; font-weight: 600; cursor: pointer;
+    }
+
+    /* 底部固定播放器 */
+    .bottom-dock {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: var(--bar-bg); color: #fff; z-index: 30;
+    }
+    .sub-dock {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 7px 16px; background: #262936; font-size: 13px; color: #ccc;
+    }
+    .sub-dock .nav-step { cursor: pointer; user-select: none; padding: 2px 6px; }
+    .blind-clue-btn {
+      background: linear-gradient(135deg, #e67e22, #d35400);
+      color: #fff; border: none; border-radius: 16px;
+      padding: 4px 14px; font-size: 12.5px; font-weight: 700;
+      cursor: pointer; display: flex; align-items: center; gap: 5px;
+      box-shadow: 0 2px 6px rgba(211, 84, 0, 0.4);
+    }
+    .blind-clue-btn:active { transform: scale(0.94); }
+    .progress-wrap {
+      padding: 6px 20px 0; display: flex; align-items: center; gap: 10px; font-size: 11px; color: #aaa;
+    }
+    .progress-bar { flex: 1; accent-color: #fff; cursor: pointer; height: 4px; }
+    .player-controls {
+      display: flex; justify-content: space-around; align-items: center;
+      padding: 8px 16px 16px; max-width: 600px; margin: 0 auto;
+    }
+    .ctrl-btn {
+      background: none; border: none; color: #fff;
+      font-size: 16px; cursor: pointer; display: flex;
+      align-items: center; justify-content: center;
+      width: 44px; height: 44px; border-radius: 8px;
+    }
+    .play-btn { font-size: 28px; width: 54px; height: 54px; }
+    .speed-btn { background: #2c2f3b; font-size: 14px; font-weight: bold; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <div class="brand-title">EJU听力</div>
+      <div class="brand-sub">EJU Listening </div>
+    </div>
+    <div class="header-controls">
+      <button class="icon-btn" id="toggleAllMeaningBtn" title="全部显示/隐藏释义">👁️</button>
+      <button class="icon-btn" id="themeBtn" title="切换夜间模式">🌙</button>
+    </div>
+  </header>
+
+  <div class="nav-bar">
+    <div class="select-wrapper">
+      <select class="set-select" id="setSelect"></select>
+      <select class="question-select" id="questionSelect"></select>
+    </div>
+    <button class="filter-star-btn" id="filterStarBtn" title="只看本题收藏生词">⭐</button>
+  </div>
+
+  <div class="top-banner">
+    <div class="question-prompt" id="questionIntro"></div>
+    <div class="toast-tip" id="voiceToast">耳朵预热，而后听题</div>
+  </div>
+
+  <div class="container">
+    <div id="vocabList"></div>
+    <button class="expand-vocab-btn" id="expandVocabBtn"></button>
+
+    <div class="eju-extra">
+      <div class="extra-btns">
+        <button class="toggle-btn primary-clue" id="toggleClueBtn">🎯 答案句精析与单听</button>
+        <button class="toggle-btn" id="toggleScriptBtn">📜 展开听力原文 (含高亮)</button>
+        <button class="toggle-btn" id="toggleAnswerBtn">✅ 查看正确答案</button>
+      </div>
+
+      <div class="extra-content" id="clueBox"></div>
+      <div class="extra-content" id="scriptBox"></div>
+      <div class="extra-content" id="answerBox"></div>
+    </div>
+  </div>
+
+  <div class="bottom-dock">
+    <div class="sub-dock">
+      <span class="nav-step" id="prevQBtn">⬅️ 上一题</span>
+      <button class="blind-clue-btn" id="blindClueBtn" title="不看文稿直接盲听本题答案句">🎯 答案句</button>
+      <span class="nav-step" id="nextQBtn">下一题 ➡️</span>
+    </div>
+    <div class="progress-wrap">
+      <span id="curTime">00:00</span>
+      <input type="range" class="progress-bar" id="progressBar" value="0" min="0" step="0.1">
+      <span id="durTime">00:00</span>
+    </div>
+    <div class="player-controls">
+      <button class="ctrl-btn" id="resetBtn" title="重头播放">✕</button>
+      <button class="ctrl-btn" id="rewBtn" title="后退5秒">↺ 5</button>
+      <button class="ctrl-btn play-btn" id="playBtn">▶</button>
+      <button class="ctrl-btn" id="fwdBtn" title="前进5秒">5 ↻</button>
+      <button class="ctrl-btn speed-btn" id="speedBtn">1x</button>
+    </div>
+  </div>
+
+  <audio id="audioPlayer"></audio>
+
+  <script>
+    // === Demo 题库（第1回 前3题完整示范：含核心词 + 拓展考点词 + 答案句） ===
+    const EJU_SETS = [
+      {
+        setId: "set01",
+        setName: "第1回 (Demo)",
+        questions: [
+          {
+            id: "0101", title: "聴読解 1番", audio: "0101.mp3", answer: "④ (解答番号 1)",
+            intro: "先生が、情報教育について話しています。この先生が最後にする質問の答えはどれですか。",
+            keySentence: "そして第4は、メディア社会で安全に行動するにはどうしたらいいかを理解することです。",
+            keyTranslation: "第四点，是理解在媒体社会中该如何安全地行动。",
+            keyNote: "老师最后提问“为了防止个人信息在网络上扩散该学什么？”，对应“在媒体社会中安全行动”，因此锁定第4项。",
+            script: `情報化社会が進展していく中で、情報教育の重要性は今後ますます高まっていくと考えられます。そこで、今日は、情報について何を学べばよいのか、ということについてお話ししたいと思います。\n情報教育は大きく4つに分けることができます。第1は、新聞やテレビなど、いろいろなメディアの特性を知ることです。第2は、どんなときにどのメディアを使ったらいいか判断できるようにすることです。これは第1の内容の応用編と言っていいでしょう。第3は、メディアが私たちの暮らしや社会にどんな影響を与えているかを学ぶことです。特に普段意識されることのない隠れた影響について知ることが大切です。そして第4は、メディア社会で安全に行動するにはどうしたらいいかを理解することです。\nでは、自分の個人情報がネット上に拡散してしまわないようにするためには、何を学べばよいでしょうか。`,
+            vocab: [
+              { kana: "しんてん", kanji: "進展", meaning: "进展，发展" },
+              { kana: "じゅうようせい", kanji: "重要性", meaning: "重要性" },
+              { kana: "とくせい", kanji: "特性", meaning: "特性，特征" },
+              { kana: "おうようへん", kanji: "応用編", meaning: "应用篇" },
+              { kana: "えいきょう", kanji: "影響", meaning: "影响" },
+              { kana: "いしき", kanji: "意識", meaning: "意识，察觉" },
+              { kana: "こじんじょうほう", kanji: "個人情報", meaning: "个人信息" },
+              { kana: "かくさん", kanji: "拡散", meaning: "扩散，散播" }
+            ],
+            extraVocab: [
+              { kana: "じょうほうかしゃかい", kanji: "情報化社会", meaning: "信息化社会", tag: "背景高频" },
+              { kana: "ますますたかまる", kanji: "ますます高まる", meaning: "日益提高，愈发高涨", tag: "趋势表达" },
+              { kana: "はんだん", kanji: "判断", meaning: "判断", tag: "设问/选项" },
+              { kana: "かくれたえいきょう", kanji: "隠れた影響", meaning: "潜在的影响，隐性影响", tag: "干扰项点" },
+              { kana: "あんぜんにこうどうする", kanji: "安全に行動する", meaning: "安全地行动", tag: "正答定位" }
+            ]
+          },
+          {
+            id: "0102", title: "聴読解 2番", audio: "0102.mp3", answer: "③ (解答番号 2)",
+            intro: "先生がマーケティングの授業で価格戦略について話しています。この先生が最後にする質問の答えはどれですか。",
+            keySentence: "それから、習慣効果というのもあります。自動販売機の缶コーヒーは130円で売られていることが多いので、人々はこの価格設定に慣れています。",
+            keyTranslation: "此外还有“习惯效应”。自动售货机的罐装咖啡大多卖130日元，人们已经习惯了这个定价。",
+            keyNote: "面包店原定140日元卖不动，发现店里大多是110~130日元后改定120日元就畅销了，属于顺应大众对价格带的“习惯认知（習慣効果）”。",
+            script: `商品をたくさん売るためには、商品の価格をどのように決めればいいのでしょうか。今日は4つの考え方についてお話しします。\n1つ目は威光効果というものです。これは、価格は高ければ高いほどよい、それを買うことで自分の価値も上がるという人の心理を利用したもので、高ければ高いほど売れるという、通常とは逆の購買行動を引き起こします。次に、端数効果というものがあります。これは皆さんもよく見かけるでしょう。値段を3000円とするよりも、そこからほんの少し値引きした価格にしたほうが、お得な感じがするという心理を利用しています。それから、習慣効果というのもあります。自動販売機の缶コーヒーは130円で売られていることが多いので、人々はこの価格設定に慣れています。そこで、110円で缶コーヒーを売り出すと、みんな「安い」と感じてつい買ってしまうのです。そのほかにも、1つだと398円だけれど3つで1000円というような売り方をする場合もあり、これは抱き合わせという戦略です。\nでは、こんな例を考えてみましょう。あるコンビニエンスストアで、140円でパンを売ろうとしたら売れなかったので、売れない理由を調べに売り場に行ってみました。するとお店に並んでいるパンは110円から130円という価格帯のものばかりでした。そこで売りたいパンの値段を120円にしたら売れるようになりました。このケースでは、どのような価格戦略が成功したと言えるでしょうか。`,
+            vocab: [
+              { kana: "かかくせんりゃく", kanji: "価格戦略", meaning: "价格战略/定价策略" },
+              { kana: "いこうこうか", kanji: "威光効果", meaning: "威光效应（声望定价）" },
+              { kana: "こうばいこうどう", kanji: "購買行動", meaning: "购买行为" },
+              { kana: "はすうこうか", kanji: "端数効果", meaning: "尾数效应（零头定价）" },
+              { kana: "ねびき", kanji: "値引き", meaning: "降价，打折" },
+              { kana: "しゅうかんこうか", kanji: "習慣効果", meaning: "习惯效应" },
+              { kana: "だきあわせ", kanji: "抱き合わせ", meaning: "捆绑销售，搭配销售" },
+              { kana: "かかくたい", kanji: "価格帯", meaning: "价格带，价格区间" }
+            ],
+            extraVocab: [
+              { kana: "ひきおこす", kanji: "引き起こす", meaning: "引起，引发", tag: "逻辑动词" },
+              { kana: "おとくなかんじ", kanji: "お得な感じ", meaning: "划算的感觉", tag: "口语/心理" },
+              { kana: "かかくせってい", kanji: "価格設定", meaning: "价格设定，定价", tag: "核心考点" },
+              { kana: "うりだす", kanji: "売り出す", meaning: "上市出售，推向市场", tag: "复合动词" },
+              { kana: "ついかってしまう", kanji: "つい買ってしまう", meaning: "不知不觉就买了", tag: "语气副词" }
+            ]
+          },
+          {
+            id: "0103", title: "聴読解 3番", audio: "0103.mp3", answer: "③ (解答番号 3)",
+            intro: "女子学生と男子学生が大学の体育の授業について話しています。この女子学生が体育の第2希望として申し込むのはどれですか。",
+            keySentence: "ボール使わないよ。うーん。それも苦手だけど、仕方ないわね。第2希望はそれにしておくわ。",
+            keyTranslation: "“不用球哦。”“嗯……那个虽然我也不擅长，但没办法了，第二志愿就选它吧。”",
+            keyNote: "三步排除法：① 必须在文学部校区（文学部の体育館）→ ② 排除球类（球技苦手 / ボール使わない）→ ③ 敲定第2志愿。",
+            script: `女子学生：大学に入ってまで体育をやらなきゃいけないなんて、いやね。\n男子学生：なんで？ 体を動かせていいじゃない。自分の好きなスポーツを選べるんだしさ。\n女子学生：私は文学部キャンパスでできるものにするわ。移動するのいやだから。\n男子学生：僕はちゃんと体を動かすものにしたいな。\n女子学生：私は弓道にしとこうかな。\n男子学生：弓道人気あるみたいだから、第2希望もちゃんと考えておいたほうがいいよ。\n女子学生：そうなんだ。どれにしようかな。\n男子学生：これにしたら？ 文学部の体育館だよ。\n女子学生：私、球技苦手なのよ。\n男子学生：じゃあ、これは？ ボール使わないよ。\n女子学生：うーん。それも苦手だけど、仕方ないわね。第2希望はそれにしておくわ。`,
+            vocab: [
+              { kana: "たいいく", kanji: "体育", meaning: "体育" },
+              { kana: "いどう", kanji: "移動", meaning: "移动，换校区" },
+              { kana: "きゅうどう", kanji: "弓道", meaning: "弓道（日本射箭）" },
+              { kana: "だいにきぼう", kanji: "第2希望", meaning: "第二志愿" },
+              { kana: "たいいくかん", kanji: "体育館", meaning: "体育馆" },
+              { kana: "きゅうぎ", kanji: "球技", meaning: "球类运动" },
+              { kana: "にがて", kanji: "苦手", meaning: "不擅长，发怵" },
+              { kana: "しかたない", kanji: "仕方ない", meaning: "没办法，不得已" }
+            ],
+            extraVocab: [
+              { kana: "やらなきゃいけない", kanji: "やらなきゃいけない", meaning: "必须得做（やらなければならない口语）", tag: "口语缩略" },
+              { kana: "しとこうかな", kanji: "しとこうかな", meaning: "先选定这个吧（しておこうかな口语）", tag: "口语缩略" },
+              { kana: "もうしこむ", kanji: "申し込む", meaning: "报名，申请", tag: "设问核心词" },
+              { kana: "にしておく", kanji: "にしておく", meaning: "暂且定为…，就选…吧", tag: "正答定位" }
+            ]
+          }
+        ]
+      }
+    ];
+
+    // === 状态管理 ===
+    let currentSetIdx = 0;
+    let currentQIdx = 0;
+    let showAllMeaning = false;
+    let showExtraVocab = false;
+    let onlyStarred = false;
+    let starredMap = JSON.parse(localStorage.getItem('eju_starred_vocab') || '{}');
+    const speeds = [0.8, 1.0, 1.2, 1.5];
+    let speedIdx = 1;
+
+    // === DOM 引用 ===
+    const setSelect = document.getElementById('setSelect');
+    const questionSelect = document.getElementById('questionSelect');
+    const questionIntro = document.getElementById('questionIntro');
+    const voiceToast = document.getElementById('voiceToast');
+    const vocabListEl = document.getElementById('vocabList');
+    const expandVocabBtn = document.getElementById('expandVocabBtn');
+    const clueBox = document.getElementById('clueBox');
+    const scriptBox = document.getElementById('scriptBox');
+    const answerBox = document.getElementById('answerBox');
+    const audioPlayer = document.getElementById('audioPlayer');
+    const playBtn = document.getElementById('playBtn');
+    const progressBar = document.getElementById('progressBar');
+    const curTimeEl = document.getElementById('curTime');
+    const durTimeEl = document.getElementById('durTime');
+
+    // === 初始化菜单 ===
+    function initMenus() {
+      setSelect.innerHTML = EJU_SETS.map((s, idx) =>
+        `<option value="${idx}">${s.setName}</option>`
+      ).join('');
+
+      setSelect.addEventListener('change', (e) => {
+        currentSetIdx = parseInt(e.target.value, 10);
+        populateQuestionSelect();
+        loadQuestion(0);
+      });
+
+      questionSelect.addEventListener('change', (e) => {
+        loadQuestion(parseInt(e.target.value, 10));
+      });
+
+      populateQuestionSelect();
+    }
+
+    function populateQuestionSelect() {
+      const qs = EJU_SETS[currentSetIdx].questions;
+      questionSelect.innerHTML = qs.map((item, idx) =>
+        `<option value="${idx}">${item.id} · ${item.title}</option>`
+      ).join('');
+    }
+
+    // === 加载题目 ===
+    function loadQuestion(qIdx) {
+      const qs = EJU_SETS[currentSetIdx].questions;
+      if (qIdx < 0 || qIdx >= qs.length) return;
+      currentQIdx = qIdx;
+      showExtraVocab = false;
+      const data = qs[qIdx];
+      questionSelect.value = qIdx;
+      questionIntro.textContent = data.intro;
+
+      clueBox.classList.remove('show');
+      scriptBox.classList.remove('show');
+      answerBox.classList.remove('show');
+
+      // 渲染答案句精析卡片
+      clueBox.innerHTML = `
+        <div class="clue-card">
+          <div class="clue-jp">🎯 ${data.keySentence}</div>
+          <div class="clue-cn">${data.keyTranslation}</div>
+          <div class="clue-note">💡 <b>解析：</b>${data.keyNote}</div>
+          <div class="clue-actions">
+            <button class="speak-clue-btn" onclick="speakKeySentence(1.0)">🎧 朗读答案句 (原速)</button>
+            <button class="speak-clue-btn" style="background:#5a6268;" onclick="speakKeySentence(0.8)">🐢 0.8x 慢速精听</button>
+          </div>
+        </div>
+      `;
+
+      // 渲染高亮原文
+      const highlightedScript = data.script.replace(
+        data.keySentence,
+        `<mark class="script-hl" onclick="speakKeySentence(1.0)" title="点击朗读该答案句">${data.keySentence}</mark>`
+      );
+      scriptBox.innerHTML = highlightedScript;
+      answerBox.innerHTML = `本题正答：<span class="answer-badge">${data.answer}</span>`;
+
+      audioPlayer.src = data.audio;
+      audioPlayer.playbackRate = speeds[speedIdx];
+      playBtn.textContent = '▶';
+
+      renderVocab();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // === 渲染分层词汇列表 ===
+    function renderVocab() {
+      const data = EJU_SETS[currentSetIdx].questions[currentQIdx];
+      const extraCount = data.extraVocab ? data.extraVocab.length : 0;
+
+      if (extraCount > 0) {
+        expandVocabBtn.style.display = 'block';
+        expandVocabBtn.textContent = showExtraVocab
+          ? `🔼 收起拓展词汇`
+          : `➕ 展开老师推荐：设问 / 逻辑 / 考点拓展词 (+${extraCount} 词)`;
+      } else {
+        expandVocabBtn.style.display = 'none';
+      }
+
+      const combinedVocab = showExtraVocab
+        ? [...data.vocab, ...(data.extraVocab || [])]
+        : data.vocab;
+
+      const list = combinedVocab.filter((v) => {
+        const key = `${data.id}_${v.kana}`;
+        return !onlyStarred || starredMap[key];
+      });
+
+      if (list.length === 0) {
+        vocabListEl.innerHTML = `<div style="text-align:center;padding:30px;color:var(--text-sub);">本题暂无收藏的生词</div>`;
+        return;
+      }
+
+      vocabListEl.innerHTML = list.map((v, i) => {
+        const key = `${data.id}_${v.kana}`;
+        const isStarred = !!starredMap[key];
+        const hideClass = (i === 0 || showAllMeaning) ? '' : 'hidden';
+        const tagHtml = v.tag ? `<span class="tag-badge">${v.tag}</span>` : '';
+        const cleanKana = v.kana.replace(/[〜～・（）()「」\s]/g, '');
+        return `
+          <div class="vocab-card">
+            <div class="vocab-left">
+              <div class="kana">${v.kana}</div>
+              <button class="tts-btn" onclick="speakJapanese('${cleanKana}')" title="点击发音">♪</button>
+              <div class="meaning-box ${hideClass}" onclick="this.classList.toggle('hidden')">
+                <div class="kanji-row">
+                  <span class="kanji">${v.kanji}</span>
+                  ${tagHtml}
+                </div>
+                <div class="meaning">${v.meaning}</div>
+                <div class="dots">・・・</div>
+              </div>
+            </div>
+            <button class="star-btn ${isStarred ? 'starred' : ''}" onclick="toggleStar('${key}', this)">
+              ${isStarred ? '★' : '☆'}
+            </button>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // === 正式版 1.0 黄金发音闭环：优先有道真人原声 + 优选自然语音无缝兜底（100%必响） ===
+    const wordAudio = new Audio();
+    let jpVoice = null;
+
+    function loadBestJapaneseVoice() {
+      if (!('speechSynthesis' in window)) return;
+      const voices = window.speechSynthesis.getVoices();
+      jpVoice = voices.find(v => v.lang.includes('ja') && v.name.includes('Nanami')) ||
+                voices.find(v => v.lang.includes('ja') && v.name.includes('Keita')) ||
+                voices.find(v => v.lang.includes('ja') && v.name.includes('Natural')) ||
+                voices.find(v => v.lang.includes('ja') && v.name.includes('Google')) ||
+                voices.find(v => v.lang.includes('ja') && (v.name.includes('Kyoko') || v.name.includes('Otoya'))) ||
+                voices.find(v => v.lang.includes('ja'));
+    }
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.onvoiceschanged = loadBestJapaneseVoice;
+      loadBestJapaneseVoice();
+    }
+
+    function fallbackLocalSpeech(text, rate = 1.0) {
+      if (!('speechSynthesis' in window)) return;
+      window.speechSynthesis.cancel();
+      if (!jpVoice) loadBestJapaneseVoice();
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.lang = 'ja-JP';
+      if (jpVoice) utter.voice = jpVoice;
+      utter.rate = rate;
+      window.speechSynthesis.speak(utter);
+    }
+
+    // 单词发音：100% 还原最初版有道真人原声 + 兜底
+    function speakJapanese(text) {
+      const clean = text.replace(/[〜～・（）()「」\s]/g, '');
+      const url = `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(clean)}&le=jap`;
+      wordAudio.pause();
+      wordAudio.src = url;
+      wordAudio.playbackRate = 1.0;
+      wordAudio.play().catch(() => {
+        fallbackLocalSpeech(clean, 1.0);
+      });
+    }
+
+    // 答案句发音：优先有道在线原声流，若超长被拒则无缝切入优选自然语音兜底
+    function speakKeySentence(rate = 1.0) {
+      const data = EJU_SETS[currentSetIdx].questions[currentQIdx];
+      const cleanSentence = data.keySentence
+        .replace(/^(男子学生|女子学生|先生|職員|管理人|留学生)[：:]\s*/g, '')
+        .replace(/[「」『』]/g, '')
+        .trim();
+
+      const url = `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(cleanSentence)}&le=jap`;
+      wordAudio.pause();
+      wordAudio.src = url;
+      wordAudio.playbackRate = rate;
+      voiceToast.textContent = '🔊 正在播放答案句...';
+
+      wordAudio.play().then(() => {
+        wordAudio.onended = () => { voiceToast.textContent = '耳朵预热，而后听题'; };
+      }).catch(() => {
+        fallbackLocalSpeech(cleanSentence, rate);
+        setTimeout(() => { voiceToast.textContent = '耳朵预热，而后听题'; }, 3500);
+      });
+    }
+
+    // === 收藏切换 ===
+    function toggleStar(key, btnEl) {
+      if (starredMap[key]) {
+        delete starredMap[key];
+        btnEl.classList.remove('starred');
+        btnEl.textContent = '☆';
+      } else {
+        starredMap[key] = true;
+        btnEl.classList.add('starred');
+        btnEl.textContent = '★';
+      }
+      localStorage.setItem('eju_starred_vocab', JSON.stringify(starredMap));
+      if (onlyStarred) renderVocab();
+    }
+
+    // === 交互按钮绑定 ===
+    expandVocabBtn.addEventListener('click', () => {
+      showExtraVocab = !showExtraVocab;
+      renderVocab();
+    });
+
+    document.getElementById('blindClueBtn').addEventListener('click', () => {
+      speakKeySentence(1.0);
+    });
+
+    document.getElementById('toggleAllMeaningBtn').addEventListener('click', () => {
+      showAllMeaning = !showAllMeaning;
+      renderVocab();
+    });
+
+    document.getElementById('themeBtn').addEventListener('click', (e) => {
+      document.body.classList.toggle('dark');
+      e.target.textContent = document.body.classList.contains('dark') ? '☀️' : '🌙';
+    });
+
+    document.getElementById('filterStarBtn').addEventListener('click', (e) => {
+      onlyStarred = !onlyStarred;
+      e.target.classList.toggle('active', onlyStarred);
+      renderVocab();
+    });
+
+    document.getElementById('prevQBtn').addEventListener('click', () => {
+      if (currentQIdx > 0) loadQuestion(currentQIdx - 1);
+    });
+    document.getElementById('nextQBtn').addEventListener('click', () => {
+      const qs = EJU_SETS[currentSetIdx].questions;
+      if (currentQIdx < qs.length - 1) loadQuestion(currentQIdx + 1);
+    });
+
+    document.getElementById('toggleClueBtn').addEventListener('click', () => {
+      clueBox.classList.toggle('show');
+    });
+    document.getElementById('toggleScriptBtn').addEventListener('click', () => {
+      scriptBox.classList.toggle('show');
+    });
+    document.getElementById('toggleAnswerBtn').addEventListener('click', () => {
+      answerBox.classList.toggle('show');
+    });
+
+    // === 底部题目原声 MP3 控制 ===
+    function formatTime(sec) {
+      if (!sec || isNaN(sec)) return '00:00';
+      const m = Math.floor(sec / 60).toString().padStart(2, '0');
+      const s = Math.floor(sec % 60).toString().padStart(2, '0');
+      return `${m}:${s}`;
+    }
+
+    playBtn.addEventListener('click', () => {
+      if (audioPlayer.paused) {
+        audioPlayer.play().catch(() => {
+          const curAudio = EJU_SETS[currentSetIdx].questions[currentQIdx].audio;
+          voiceToast.textContent = `未找到音频 ${curAudio}`;
+        });
+      } else {
+        audioPlayer.pause();
+      }
+    });
+
+    audioPlayer.addEventListener('play', () => playBtn.textContent = '⏸');
+    audioPlayer.addEventListener('pause', () => playBtn.textContent = '▶');
+    audioPlayer.addEventListener('loadedmetadata', () => {
+      progressBar.max = audioPlayer.duration || 0;
+      durTimeEl.textContent = formatTime(audioPlayer.duration);
+    });
+    audioPlayer.addEventListener('timeupdate', () => {
+      progressBar.value = audioPlayer.currentTime;
+      curTimeEl.textContent = formatTime(audioPlayer.currentTime);
+    });
+
+    progressBar.addEventListener('input', (e) => {
+      audioPlayer.currentTime = parseFloat(e.target.value);
+    });
+
+    document.getElementById('rewBtn').addEventListener('click', () => {
+      audioPlayer.currentTime = Math.max(0, audioPlayer.currentTime - 5);
+    });
+    document.getElementById('fwdBtn').addEventListener('click', () => {
+      audioPlayer.currentTime = Math.min(audioPlayer.duration || 0, audioPlayer.currentTime + 5);
+    });
+    document.getElementById('resetBtn').addEventListener('click', () => {
+      audioPlayer.pause();
+      audioPlayer.currentTime = 0;
+    });
+    document.getElementById('speedBtn').addEventListener('click', (e) => {
+      speedIdx = (speedIdx + 1) % speeds.length;
+      audioPlayer.playbackRate = speeds[speedIdx];
+      e.target.textContent = `${speeds[speedIdx]}x`;
+    });
+
+    initMenus();
+    loadQuestion(0);
+  </script>
+</body>
+</html>
